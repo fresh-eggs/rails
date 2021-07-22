@@ -1,3 +1,9 @@
+*   Change default serialization format of `MessageEncryptor` from `Marshal` to `JsonWithMarshalFallback`.
+
+    Fallback to Marshal serilization can be disabled with `config.active_support.fallback_to_marshal_serialization = false`. 
+
+    *Zack Deveau* and *Martin Gingras*
+
 *   Faster tests by parallelizing only when overhead is justified by the number
     of them.
 

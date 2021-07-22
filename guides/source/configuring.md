@@ -916,6 +916,8 @@ There are a few configuration options available in Active Support:
   `ActiveSupport::TimeZone.utc_to_local` to return a time with a UTC offset
   instead of a UTC time incorporating that offset.
 
+* `config.active_support.fallback_to_marshal_serialization` enables backwards compatibility for old Marshal serilized messages after the change of default serilization from `Marshal` to `JSON`.
+
 ### Configuring Active Job
 
 `config.active_job` provides the following configuration options:
@@ -1106,6 +1108,7 @@ text/javascript image/svg+xml application/postscript application/x-shockwave-fla
 - `config.action_mailer.smtp_timeout`: `5`
 - `config.active_storage.video_preview_arguments`: `"-vf 'select=eq(n\\,0)+eq(key\\,1)+gt(scene\\,0.015),loop=loop=-1:size=2,trim=start_frame=1' -frames:v 1 -f image2"`
 - `config.active_record.verify_foreign_keys_for_fixtures`: `true`
+- `config.active_support.message_verifier_json_default_serializer`: `true`
 
 #### For '6.1', defaults from previous versions below and:
 
@@ -1186,6 +1189,7 @@ text/javascript image/svg+xml application/postscript application/x-shockwave-fla
 - `ActiveSupport.utc_to_local_returns_utc_offset_times`: `false`
 - `config.action_mailer.smtp_timeout`: `nil`
 - `config.active_storage.video_preview_arguments`: `"-y -vframes 1 -f image2"`
+- `config.active_support.message_verifier_json_default_serializer`: `false`
 
 ### Configuring a Database
 

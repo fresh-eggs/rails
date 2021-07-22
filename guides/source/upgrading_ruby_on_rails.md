@@ -169,6 +169,25 @@ more meaningful preview images. Previously the first frame of the video would be
 and that caused problems if the video faded in from black. This change requires
 FFmpeg v3.4+.
 
+### New ActiveSupport::MessageVerifier default serialization format
+
+By default `ActiveSupport::MessageVerifier` will now use `JSON`. 
+
+To disable backwards compatibility for old Marshal serilized messages you must set `config.active_support.fallback_to_marshal_serialization = false`:
+
+```ruby
+# config/application.rb
+config.load_defaults 6.1
+config.active_support.fallback_to_marshal_serialization = false
+```
+
+Or simply:
+
+```ruby
+# config/application.rb
+config.load_defaults 7.0
+```
+
 Upgrading from Rails 6.0 to Rails 6.1
 -------------------------------------
 

@@ -22,7 +22,6 @@ class MessageEncryptorTest < ActiveSupport::TestCase
     @verifier  = ActiveSupport::MessageVerifier.new(@secret, serializer: ActiveSupport::MessageEncryptor::NullSerializer)
     @encryptor = ActiveSupport::MessageEncryptor.new(@secret)
     @data = { "some" => "data", "now" => Time.local(2010) }
-    @data_symboized_keys = { some: "data", now: Time.utc(2010) }
     @default_fallback_to_marshal_serialization = ActiveSupport::JsonWithMarshalFallback.fallback_to_marshal_serialization
     ActiveSupport::JsonWithMarshalFallback.fallback_to_marshal_serialization = false
   end

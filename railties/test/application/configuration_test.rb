@@ -3195,30 +3195,30 @@ module ApplicationTests
 
       assert_equal true, Rails.application.config.rake_eager_load
     end
-
-    test "fallback_to_marshal_serialization is false by default" do
+    test "ActiveSupport::JsonWithMarshalFallback.fallback_to_marshal_serialization is false by default for new apps" do
       app "development"
-      assert_equal false,  Rails.application.config.fallback_to_marshal_serialization
+
+      assert_equal false, ActiveSupport::JsonWithMarshalFallback.fallback_to_marshal_serialization
     end
 
-    test "fallback_to_marshal_serialization is set correctly" do
-      add_to_config <<-RUBY
-        config.root = "#{app_path}"
-        config.fallback_to_marshal_serialization = true
+    test "ActiveSupport::JsonWithMarshalFallback.fallback_to_marshal_serialization is true by default for upgraded apps" do
+      remove_from_config '.*config\.load_defaults.*\n'
+
+      app "development"
+
+      assert_equal true, ActiveSupport::JsonWithMarshalFallback.fallback_to_marshal_serialization
+    end
+
+    test "ActiveSupport::JsonWithMarshalFallback.fallback_to_marshal_serialization can be configured via config.active_support.fallback_to_marshal_serialization" do
+      remove_from_config '.*config\.load_defaults.*\n'
+
+      app_file "config/initializers/fallback_to_marshal_serialization.rb", <<-RUBY
+        Rails.application.config.active_support.fallback_to_marshal_serialization = false
       RUBY
 
       app "development"
 
-      assert_equal true, Rails.application.config.fallback_to_marshal_serialization
-    end
-
-    test "fallback_to_marshal_serialization is true in 7.0 defaults" do
-      remove_from_config '.*config\.load_defaults.*\n'
-      add_to_config 'config.load_defaults "7.0"'
-
-      app "development"
-
-      assert_equal true, Rails.application.config.fallback_to_marshal_serialization
+      assert_not ActiveSupport::JsonWithMarshalFallback.fallback_to_marshal_serialization
     end
 
     test "unknown_asset_fallback is false by default" do
