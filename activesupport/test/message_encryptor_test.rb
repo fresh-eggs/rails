@@ -22,6 +22,7 @@ class MessageEncryptorTest < ActiveSupport::TestCase
     @verifier  = ActiveSupport::MessageVerifier.new(@secret, serializer: ActiveSupport::MessageEncryptor::NullSerializer)
     @encryptor = ActiveSupport::MessageEncryptor.new(@secret)
     @data = { "some" => "data", "now" => Time.local(2010) }
+    @data_symboized_keys = { some: "data", now: Time.utc(2010) }
     @default_fallback_to_marshal_serialization = ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization
     ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization = false
   end
@@ -65,9 +66,7 @@ class MessageEncryptorTest < ActiveSupport::TestCase
     encryptor = ActiveSupport::MessageEncryptor.new(secret[0..31], secret)
     # Message generated with 64 bit key
     message = "eHdGeExnZEwvMSt3U3dKaFl1WFo0TjVvYzA0eGpjbm5WSkt5MXlsNzhpZ0ZnbWhBWFlQZTRwaXE1bVJCS2oxMDZhYVp2dVN3V0lNZUlWQ3c2eVhQbnhnVjFmeVVubmhRKzF3WnZyWHVNMDg9LS1HSisyakJVSFlPb05ISzRMaXRzcFdBPT0=--831a1d54a3cda8a0658dc668a03dedcbce13b5ca"
-    assert_raise(ActiveSupport::MessageEncryptor::InvalidMessage) do
-      assert_equal "data", encryptor.decrypt_and_verify(message)[:some]
-    end
+    assert_equal "data", encryptor.decrypt_and_verify(message)[:some]
   end
 
   def test_alternative_serialization_method
@@ -277,7 +276,7 @@ class DefaultMarshalSerializerMessageEncryptorTest < MessageEncryptorTest
     rotated = false
     message = encryptor.decrypt_and_verify(older_message, on_rotation: proc { rotated = true })
 
-    assert_equal({ encoded: "message" }, message)
+    assert_equal({ "encoded" => "message" }, message)
     assert rotated
   end
 
@@ -291,7 +290,7 @@ class DefaultMarshalSerializerMessageEncryptorTest < MessageEncryptorTest
     assert_changes(:rotated, from: false, to: true) do
       message = encryptor.decrypt_and_verify(older_message)
 
-      assert_equal({ encoded: "message" }, message)
+      assert_equal({ "encoded" => "message" }, message)
     end
   end
 
@@ -305,7 +304,7 @@ class DefaultMarshalSerializerMessageEncryptorTest < MessageEncryptorTest
     assert_changes(:rotated, from: false, to: "Yes") do
       message = encryptor.decrypt_and_verify(older_message, on_rotation: proc { rotated = "Yes" })
 
-      assert_equal({ encoded: "message" }, message)
+      assert_equal({ "encoded" => "message" }, message)
     end
   end
 
