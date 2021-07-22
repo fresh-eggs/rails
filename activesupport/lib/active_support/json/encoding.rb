@@ -22,10 +22,6 @@ module ActiveSupport
       Encoding.json_encoder.new(options).encode(value)
     end
 
-    def self.dump(value)
-      self.encode(value)
-    end
-
     module Encoding #:nodoc:
       class JSONGemEncoder #:nodoc:
         attr_reader :options

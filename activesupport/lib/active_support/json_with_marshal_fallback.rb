@@ -12,6 +12,8 @@ module ActiveSupport
     rescue ::JSON::ParserError
       if self.fallback_to_marshal_serialization
         Marshal.load(value)
+      else
+        raise ::JSON::ParserError
       end
     end
   end
