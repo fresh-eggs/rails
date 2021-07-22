@@ -169,9 +169,9 @@ more meaningful preview images. Previously the first frame of the video would be
 and that caused problems if the video faded in from black. This change requires
 FFmpeg v3.4+.
 
-### New ActiveSupport::MessageVerifier default serialization format
+### New ActiveSupport::MessageEncryptor default serialization format
 
-By default `ActiveSupport::MessageVerifier` will now use `JSON`. 
+By default `ActiveSupport::MessageEncryptor` will now use `JSON`. 
 
 To disable backwards compatibility for old Marshal serilized messages you must set `config.active_support.fallback_to_marshal_serialization = false`:
 
