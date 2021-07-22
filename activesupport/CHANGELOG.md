@@ -1,6 +1,6 @@
-*   Change default serialization format of `MessageEncryptor` from `Marshal` to `JsonWithMarshalFallback`.
+*   Change default serialization format of `MessageEncryptor` from `Marshal` to `JSON`.
 
-    Fallback to Marshal serilization can be disabled with `config.active_support.fallback_to_marshal_serialization = false`. 
+    Fallback to Marshal serialization can be disabled with `config.active_support.fallback_to_marshal_serialization = false`. 
 
     *Zack Deveau* and *Martin Gingras*
 

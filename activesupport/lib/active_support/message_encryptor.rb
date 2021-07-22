@@ -132,7 +132,7 @@ module ActiveSupport
     #   <tt>OpenSSL::Cipher.ciphers</tt>. Default is 'aes-256-gcm'.
     # * <tt>:digest</tt> - String of digest to use for signing. Default is
     #   +SHA1+. Ignored when using an AEAD cipher like 'aes-256-gcm'.
-    # * <tt>:serializer</tt> - Object serializer to use. Default is +Marshal+.
+    # * <tt>:serializer</tt> - Object serializer to use. Default is +JSON+.
     def initialize(secret, sign_secret = nil, cipher: nil, digest: nil, serializer: nil)
       @secret = secret
       @sign_secret = sign_secret
