@@ -23,7 +23,7 @@ class MessageEncryptorTest < ActiveSupport::TestCase
     @encryptor = ActiveSupport::MessageEncryptor.new(@secret)
     @data = { "some" => "data", "now" => Time.local(2010) }
     @default_fallback_to_marshal_serialization = ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization
-    ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization = true
+    ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization = false
   end
 
   def teardown
@@ -65,24 +65,9 @@ class MessageEncryptorTest < ActiveSupport::TestCase
     encryptor = ActiveSupport::MessageEncryptor.new(secret[0..31], secret)
     # Message generated with 64 bit key
     message = "eHdGeExnZEwvMSt3U3dKaFl1WFo0TjVvYzA0eGpjbm5WSkt5MXlsNzhpZ0ZnbWhBWFlQZTRwaXE1bVJCS2oxMDZhYVp2dVN3V0lNZUlWQ3c2eVhQbnhnVjFmeVVubmhRKzF3WnZyWHVNMDg9LS1HSisyakJVSFlPb05ISzRMaXRzcFdBPT0=--831a1d54a3cda8a0658dc668a03dedcbce13b5ca"
-    assert_equal "data", encryptor.decrypt_and_verify(message)[:some]
-  end
-
-  def test_backwards_compat_for_64_bytes_key_fails_without_marshal_fallback
-    old_config = ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization
-    ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization = false
-
-    # 64 bit key
-    secret = ["3942b1bf81e622559ed509e3ff274a780784fe9e75b065866bd270438c74da822219de3156473cc27df1fd590e4baf68c95eeb537b6e4d4c5a10f41635b5597e"].pack("H*")
-    # Encryptor with 32 bit key, 64 bit secret for verifier
-    encryptor = ActiveSupport::MessageEncryptor.new(secret[0..31], secret)
-    # Message generated with 64 bit key
-    message = "eHdGeExnZEwvMSt3U3dKaFl1WFo0TjVvYzA0eGpjbm5WSkt5MXlsNzhpZ0ZnbWhBWFlQZTRwaXE1bVJCS2oxMDZhYVp2dVN3V0lNZUlWQ3c2eVhQbnhnVjFmeVVubmhRKzF3WnZyWHVNMDg9LS1HSisyakJVSFlPb05ISzRMaXRzcFdBPT0=--831a1d54a3cda8a0658dc668a03dedcbce13b5ca"
     assert_raise(ActiveSupport::MessageEncryptor::InvalidMessage) do
       assert_equal "data", encryptor.decrypt_and_verify(message)[:some]
     end
-
-    ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization = old_config
   end
 
   def test_alternative_serialization_method
@@ -131,13 +116,7 @@ class MessageEncryptorTest < ActiveSupport::TestCase
     assert_aead_not_decrypted(encryptor, [text, iv, auth_tag[0..-2]] * "--")
   end
 
-  def test_backwards_compatibility_decrypt_previously_encrypted_messages_without_metadata
-    secret = "\xB7\xF0\xBCW\xB1\x18`\xAB\xF0\x81\x10\xA4$\xF44\xEC\xA1\xDC\xC1\xDDD\xAF\xA9\xB8\x14\xCD\x18\x9A\x99 \x80)"
-    encryptor = ActiveSupport::MessageEncryptor.new(secret, cipher: "aes-256-gcm")
-    encrypted_message = "9cVnFs2O3lL9SPvIJuxBOLS51nDiBMw=--YNI5HAfHEmZ7VDpl--ddFJ6tXA0iH+XGcCgMINYQ=="
 
-    assert_equal "Ruby on Rails", encryptor.decrypt_and_verify(encrypted_message)
-  end
 
   def test_rotating_secret
     old_message = ActiveSupport::MessageEncryptor.new(secrets[:old], cipher: "aes-256-gcm").encrypt_and_sign("old")
@@ -191,7 +170,7 @@ class MessageEncryptorTest < ActiveSupport::TestCase
     rotated = false
     message = encryptor.decrypt_and_verify(older_message, on_rotation: proc { rotated = true })
 
-    assert_equal({ encoded: "message" }, message)
+    assert_equal({ "encoded" => "message" }, message)
     assert rotated
   end
 
@@ -205,7 +184,7 @@ class MessageEncryptorTest < ActiveSupport::TestCase
     assert_changes(:rotated, from: false, to: true) do
       message = encryptor.decrypt_and_verify(older_message)
 
-      assert_equal({ encoded: "message" }, message)
+      assert_equal({ "encoded" => "message" }, message)
     end
   end
 
@@ -219,7 +198,7 @@ class MessageEncryptorTest < ActiveSupport::TestCase
     assert_changes(:rotated, from: false, to: "Yes") do
       message = encryptor.decrypt_and_verify(older_message, on_rotation: proc { rotated = "Yes" })
 
-      assert_equal({ encoded: "message" }, message)
+      assert_equal({ "encoded" => "message" }, message)
     end
   end
 
@@ -261,6 +240,82 @@ class MessageEncryptorTest < ActiveSupport::TestCase
       bits.reverse!
       ::Base64.strict_encode64(bits)
     end
+end
+
+class DefaultMarshalSerializerMessageEncryptorTest < MessageEncryptorTest
+  def setup
+    @secret    = SecureRandom.random_bytes(32)
+    @verifier  = ActiveSupport::MessageVerifier.new(@secret, serializer: ActiveSupport::MessageEncryptor::NullSerializer)
+    @encryptor = ActiveSupport::MessageEncryptor.new(@secret)
+    @data = { "some" => "data", "now" => Time.local(2010) }
+    @default_fallback_to_marshal_serialization = ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization
+    ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization = true
+  end
+
+  def teardown
+    ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization = @default_fallback_to_marshal_serialization
+    super
+  end
+
+  def test_backwards_compat_for_64_bytes_key
+    # 64 bit key
+    secret = ["3942b1bf81e622559ed509e3ff274a780784fe9e75b065866bd270438c74da822219de3156473cc27df1fd590e4baf68c95eeb537b6e4d4c5a10f41635b5597e"].pack("H*")
+    # Encryptor with 32 bit key, 64 bit secret for verifier
+    encryptor = ActiveSupport::MessageEncryptor.new(secret[0..31], secret)
+    # Message generated with 64 bit key
+    message = "eHdGeExnZEwvMSt3U3dKaFl1WFo0TjVvYzA0eGpjbm5WSkt5MXlsNzhpZ0ZnbWhBWFlQZTRwaXE1bVJCS2oxMDZhYVp2dVN3V0lNZUlWQ3c2eVhQbnhnVjFmeVVubmhRKzF3WnZyWHVNMDg9LS1HSisyakJVSFlPb05ISzRMaXRzcFdBPT0=--831a1d54a3cda8a0658dc668a03dedcbce13b5ca"
+    assert_equal "data", encryptor.decrypt_and_verify(message)[:some]
+  end
+
+  def test_on_rotation_is_called_and_returns_modified_messages
+    older_message = ActiveSupport::MessageEncryptor.new(secrets[:older], "older sign").encrypt_and_sign({ encoded: "message" })
+
+    encryptor = ActiveSupport::MessageEncryptor.new(@secret)
+    encryptor.rotate secrets[:old]
+    encryptor.rotate secrets[:older], "older sign"
+
+    rotated = false
+    message = encryptor.decrypt_and_verify(older_message, on_rotation: proc { rotated = true })
+
+    assert_equal({ encoded: "message" }, message)
+    assert rotated
+  end
+
+  def test_on_rotation_can_be_passed_at_the_constructor_level
+    older_message = ActiveSupport::MessageEncryptor.new(secrets[:older], "older sign").encrypt_and_sign({ encoded: "message" })
+
+    rotated = rotated = false  # double assigning to suppress "assigned but unused variable" warning
+    encryptor = ActiveSupport::MessageEncryptor.new(@secret, on_rotation: proc { rotated = true })
+    encryptor.rotate secrets[:older], "older sign"
+
+    assert_changes(:rotated, from: false, to: true) do
+      message = encryptor.decrypt_and_verify(older_message)
+
+      assert_equal({ encoded: "message" }, message)
+    end
+  end
+
+  def test_on_rotation_option_takes_precedence_over_the_one_given_in_constructor
+    older_message = ActiveSupport::MessageEncryptor.new(secrets[:older], "older sign").encrypt_and_sign({ encoded: "message" })
+
+    rotated = rotated = false  # double assigning to suppress "assigned but unused variable" warning
+    encryptor = ActiveSupport::MessageEncryptor.new(@secret, on_rotation: proc { rotated = true })
+    encryptor.rotate secrets[:older], "older sign"
+
+    assert_changes(:rotated, from: false, to: "Yes") do
+      message = encryptor.decrypt_and_verify(older_message, on_rotation: proc { rotated = "Yes" })
+
+      assert_equal({ encoded: "message" }, message)
+    end
+  end
+
+  def test_backwards_compatibility_decrypt_previously_encrypted_messages_without_metadata
+    secret = "\xB7\xF0\xBCW\xB1\x18`\xAB\xF0\x81\x10\xA4$\xF44\xEC\xA1\xDC\xC1\xDDD\xAF\xA9\xB8\x14\xCD\x18\x9A\x99 \x80)"
+    encryptor = ActiveSupport::MessageEncryptor.new(secret, cipher: "aes-256-gcm")
+    encrypted_message = "9cVnFs2O3lL9SPvIJuxBOLS51nDiBMw=--YNI5HAfHEmZ7VDpl--ddFJ6tXA0iH+XGcCgMINYQ=="
+
+    assert_equal "Ruby on Rails", encryptor.decrypt_and_verify(encrypted_message)
+  end
 end
 
 class MessageEncryptorMetadataTest < ActiveSupport::TestCase
