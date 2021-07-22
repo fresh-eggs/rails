@@ -23,12 +23,12 @@ class MessageEncryptorTest < ActiveSupport::TestCase
     @encryptor = ActiveSupport::MessageEncryptor.new(@secret)
     @data = { "some" => "data", "now" => Time.local(2010) }
     @data_symboized_keys = { some: "data", now: Time.utc(2010) }
-    @default_fallback_to_marshal_serialization = ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization
-    ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization = false
+    @default_fallback_to_marshal_serialization = ActiveSupport::JsonWithMarshalFallback.fallback_to_marshal_serialization
+    ActiveSupport::JsonWithMarshalFallback.fallback_to_marshal_serialization = false
   end
 
   def teardown
-    ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization = @default_fallback_to_marshal_serialization
+    ActiveSupport::JsonWithMarshalFallback.fallback_to_marshal_serialization = @default_fallback_to_marshal_serialization
     super
   end
 
@@ -247,12 +247,12 @@ class DefaultMarshalSerializerMessageEncryptorTest < MessageEncryptorTest
     @verifier  = ActiveSupport::MessageVerifier.new(@secret, serializer: ActiveSupport::MessageEncryptor::NullSerializer)
     @encryptor = ActiveSupport::MessageEncryptor.new(@secret)
     @data = { "some" => "data", "now" => Time.local(2010) }
-    @default_fallback_to_marshal_serialization = ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization
-    ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization = true
+    @default_fallback_to_marshal_serialization = ActiveSupport::JsonWithMarshalFallback.fallback_to_marshal_serialization
+    ActiveSupport::JsonWithMarshalFallback.fallback_to_marshal_serialization = true
   end
 
   def teardown
-    ActiveSupport::MessageEncryptor.fallback_to_marshal_serialization = @default_fallback_to_marshal_serialization
+    ActiveSupport::JsonWithMarshalFallback.fallback_to_marshal_serialization = @default_fallback_to_marshal_serialization
     super
   end
 
