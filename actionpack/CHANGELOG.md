@@ -1,3 +1,15 @@
+*   Extend `content_security_policy_report_only` to
+    support blocks, similar to `content_security_policy`.
+
+    This allows for requests to have both Content-Security-Policy and
+    Content-Security-Policy-Report-Only headers.
+
+    The changes are backwards compatible.
+
+    Fixes #40452
+
+    *Shaun Russell*
+
 *   Raise `AbstractController::DoubleRenderError` if `head` is called after rendering.
 
     After this change, invoking `head` will lead to an error if response body is already set:

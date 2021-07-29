@@ -1,3 +1,12 @@
+*   Extend `content_security_policy_report_only` configuration to support
+    blocks, similar to `content_security_policy`.
+
+    The changes are backwards compatible.
+
+    Fixes #40452
+
+    *Shaun Russell*
+
 *   Introduce `bin/ci` for running your tests, style checks, and security audits locally or in the cloud.
 
     The specific steps are defined by a new DSL in `config/ci.rb`.
