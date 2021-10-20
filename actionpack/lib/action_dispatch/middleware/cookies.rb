@@ -5,6 +5,7 @@ require "active_support/key_generator"
 require "active_support/message_verifier"
 require "active_support/json"
 require "rack/utils"
+require "byebug"
 
 module ActionDispatch
   module RequestCookieMethods
@@ -198,6 +199,9 @@ module ActionDispatch
 
     # Raised when storing more than 4K of session data.
     CookieOverflow = Class.new StandardError
+
+    cattr_accessor :fallback_to_marshal_deserialization, instance_accessor: false, default: true
+    cattr_accessor :use_marshal_serialization, instance_accessor: false, default: true
 
     # Include in a cookie jar to allow chaining, e.g. cookies.permanent.signed.
     module ChainedCookieJars
@@ -542,6 +546,30 @@ module ActionDispatch
       end
     end
 
+    class JsonWithMarshalFallback
+      cattr_accessor :fallback_to_marshal_deserialization, instance_accessor: false, default: true
+      cattr_accessor :use_marshal_serialization, instance_accessor: false, default: true
+
+      def self.dump(value)
+        if self.use_marshal_serialization
+          Marshal.dump(value)
+        else
+          ActiveSupport::JSON.encode(value)
+        end
+      end
+
+      def self.load(value)
+        raise ::JSON::ParserError unless value.is_a?(String)
+        ActiveSupport::JSON.decode(value)
+      rescue ::JSON::ParserError
+        if self.fallback_to_marshal_deserialization
+          Marshal.load(value)
+        else
+          raise
+        end
+      end
+    end
+
     class JsonSerializer # :nodoc:
       def self.load(value)
         ActiveSupport::JSON.decode(value)
@@ -586,11 +614,14 @@ module ActionDispatch
         end
 
         def serializer
-          serializer = request.cookies_serializer || :marshal
+          default_message_encryptor_serializer = :hybrid
+          serializer = request.cookies_serializer || default_message_encryptor_serializer
           case serializer
           when :marshal
             MarshalWithJsonFallback
-          when :json, :hybrid
+          when :hybrid
+            JsonWithMarshalFallback
+          when :json
             JsonSerializer
           else
             serializer
@@ -607,7 +638,7 @@ module ActionDispatch
 
       def initialize(parent_jar)
         super
-
+        byebug
         secret = request.key_generator.generate_key(request.signed_cookie_salt)
         @verifier = ActiveSupport::MessageVerifier.new(secret, digest: signed_cookie_digest, serializer: SERIALIZER)
 
