@@ -176,9 +176,11 @@ module ActionDispatch # :nodoc:
     private_constant :MAPPINGS, :DIRECTIVES, :DEFAULT_NONCE_DIRECTIVES
 
     attr_reader :directives
+    attr_accessor :reporting_metadata
 
     def initialize
       @directives = {}
+      @reporting_metadata = {}
       yield self if block_given?
     end
 
@@ -296,10 +298,24 @@ module ActionDispatch # :nodoc:
 
     def build(context = nil, nonce = nil, nonce_directives = nil)
       nonce_directives = DEFAULT_NONCE_DIRECTIVES if nonce_directives.nil?
+      configure_report_uri 
       build_directives(context, nonce, nonce_directives).compact.join("; ")
     end
 
     private
+      def configure_report_uri
+        # iterate reporting_metadata hash
+        # for each key, add as URL param to reporting-uri
+        # for each value, add as value for URL param for corresponding key
+        return if @reporting_metadata.empty?
+        metadata = String.new
+        @reporting_metadata.each do |url_param, value|
+          metadata << "?#{URI.encode_uri_component(url_param)}=#{URI.encode_uri_component(value)}"
+        end
+
+        @directives["report-uri"] = [@directives["report-uri"].first.concat(metadata)]
+      end
+
       def apply_mappings(sources)
         sources.map do |source|
           case source
@@ -360,6 +376,7 @@ module ActionDispatch # :nodoc:
         when Symbol
           source.to_s
         when Proc
+          debugger
           if context.nil?
             raise RuntimeError, "Missing context for the dynamic content security policy source: #{source.inspect}"
           else
