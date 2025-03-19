@@ -239,6 +239,16 @@ module ActionDispatch # :nodoc:
       @directives["report-uri"] = [uri]
     end
 
+    # Enable the [report-to](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/report-to)
+    # directive. Violation reports will be sent to the
+    # matching endpoint specified in the Reporting Endpoints response header:
+    #
+    #     policy.report_to "csp-violations"
+    #
+    def report_to(uri)
+      @directives["report-to"] = [uri]
+    end
+
     # Specify asset types for which [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) is required:
     #
     #     policy.require_sri_for :script, :style
